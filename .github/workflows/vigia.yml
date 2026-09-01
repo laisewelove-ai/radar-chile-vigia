@@ -1,24 +1,63 @@
 name: Vigia do Radar Chile
 
-# A cada 4 horas. O radar atualiza das 09h às 17h no Chile, então seis
-# verificações por dia pegam qualquer parada em poucas horas, e não em cinco
-# dias como no apagão de agosto de 2026.
+# De duas em duas horas. O radar atualiza das 09h às 17h no Chile, e a
+# verificação decide por DIA, não por horas corridas: o agendador do GitHub
+# derruba disparo com frequência, e contar horas fazia um vão entre execuções
+# virar alarme falso.
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch:
+
+# Para gravar estado.json. É ele que segura o alarme repetido e, de quebra,
+# mantém este repositório ativo: workflow agendado em repo parado há 60 dias é
+# desativado pelo GitHub, e um vigia que se desliga sozinho é pior que nenhum.
+permissions:
+  contents: write
 
 jobs:
   vigiar:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Conferir se o Radar Chile está vivo
+        id: checar
+        continue-on-error: true
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
         run: python3 vigia.py
+
+      # Sempre, inclusive quando deu alarme: é assim que a trava de repetição
+      # sobrevive de um run para o outro.
+      - name: Guardar o estado
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name 'Vigia do Radar'
+          git config user.email 'actions@users.noreply.github.com'
+          git add estado.json || true
+          if git diff --cached --quiet; then
+            echo 'Nada mudou no estado.'
+            exit 0
+          fi
+          git commit -m 'chore: estado do vigia'
+          for try in 1 2 3; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0
+            echo "push tentativa $try falhou, repetindo..."
+            sleep 5
+          done
+          echo 'ERRO: não consegui guardar o estado do vigia'
+          exit 1
+
+      - name: Repassar o resultado da verificação
+        if: steps.checar.outcome == 'failure'
+        run: |
+          echo "O vigia encontrou problema no radar. Detalhe no passo acima."
+          exit 1

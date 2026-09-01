@@ -1,6 +1,6 @@
 # Vigia do Radar Chile
 
-Confere de quatro em quatro horas se o [Radar Chile](https://radar-chile.pages.dev/)
+Confere de duas em duas horas se o [Radar Chile](https://radar-chile.pages.dev/)
 continua atualizando, e avisa a Laise no Telegram quando para.
 
 ## Por que isso mora fora do radar
@@ -22,14 +22,29 @@ ficam velhos demais.
 ## O que dispara alarme
 
 - A página não abre em três tentativas.
-- O carimbo de atualização passa de 4 horas durante o dia, ou de 20 horas de
-  madrugada (o radar só roda das 09h às 17h no Chile, então ficar velho à noite
-  é o normal).
-- A cotação do câmbio passa de 30 horas, que é o sintoma silencioso: o site
-  segue no ar, bonito, mostrando número velho como se fosse de hoje.
+- O carimbo de atualização não é do dia corrente, cobrado a partir das 11h no
+  Chile (a janela do radar abre às 09h, e as duas horas de folga absorvem
+  atraso do agendador). Antes das 11h, vale a atualização de ontem.
+- A cotação do câmbio não é do dia corrente, pelo mesmo critério. Esse é o
+  sintoma silencioso: o site segue no ar, bonito, mostrando número velho como
+  se fosse de hoje.
+- A linha da cotação some da página. Sem esse caso, a checagem acima ficaria
+  cega justamente quando o formato mudasse.
 - A captura mensal de passagens do mês corrente não aparece no site a partir do
   dia 2. Ela roda todo dia 1 e é a falha mais fácil de passar batida, porque
   acontece uma vez por mês e só incomoda quando alguém vai procurar o preço.
+
+## Por que ele grava `estado.json`
+
+Duas razões, e as duas vieram de auditoria:
+
+1. **Não repetir alarme.** Sem estado, um defeito que dura um mês manda a mesma
+   mensagem 12 vezes por dia e para de ser lido. O mesmo alarme só volta depois
+   de 12 horas; alarme diferente fura a trava na hora.
+2. **Não se desligar sozinho.** O GitHub desativa workflow agendado depois de
+   60 dias sem atividade no repositório, e este aqui, por desenho, nunca
+   receberia commit. O estado é gravado uma vez por dia, o que mantém o
+   repositório ativo. Um vigia que morre em silêncio é pior que vigia nenhum.
 
 ## Segredos necessários
 
