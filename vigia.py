@@ -33,6 +33,8 @@ CHILE = timezone(timedelta(hours=-4))  # o horário de verão desloca 1h, e as
 LIMITE_SITE_DIA = 4      # horas, quando já passou da hora de ter atualizado
 LIMITE_SITE_NOITE = 20   # horas, de madrugada: só alarma se perdeu o dia todo
 LIMITE_CAMBIO = 30       # horas: o câmbio roda 3x/dia, 30h significa dia perdido
+DIA_TOLERANCIA_PASSAGENS = 2  # a captura mensal roda no dia 1; do dia 2 em diante
+                              # a ausência do mês no site é falha, não espera
 
 
 def telegram(msg: str) -> None:
@@ -107,6 +109,20 @@ def main() -> int:
             problemas.append(
                 f"A cotação está congelada há {idade_c:.0f} horas "
                 f"({cambio:%d/%m às %H:%M}) e o site mostra ela como se fosse de hoje."
+            )
+
+    # Captura mensal de passagens: roda todo dia 1 e é o item mais fácil de
+    # perder em silêncio, porque falha uma vez por mês e ninguém repara até
+    # precisar do preço. Em 01/08/2026 ela rodou, publicou e o commit foi
+    # rejeitado; os preços de agosto sumiram do site e só voltaram em 01/09,
+    # recuperados na mão do Mac da Laise.
+    if agora.day >= DIA_TOLERANCIA_PASSAGENS:
+        marca = f"captured-{agora:%Y-%m}"
+        if marca not in html:
+            problemas.append(
+                f"A captura de passagens de {agora:%m/%Y} não está no site. "
+                "Ela roda todo dia 1; rodar o workflow "
+                "radar-monthly-flights.yml resolve."
             )
 
     if problemas:

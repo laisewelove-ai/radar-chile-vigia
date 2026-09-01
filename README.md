@@ -27,6 +27,9 @@ ficam velhos demais.
   é o normal).
 - A cotação do câmbio passa de 30 horas, que é o sintoma silencioso: o site
   segue no ar, bonito, mostrando número velho como se fosse de hoje.
+- A captura mensal de passagens do mês corrente não aparece no site a partir do
+  dia 2. Ela roda todo dia 1 e é a falha mais fácil de passar batida, porque
+  acontece uma vez por mês e só incomoda quando alguém vai procurar o preço.
 
 ## Segredos necessários
 
