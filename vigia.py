@@ -32,6 +32,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 URL = "https://radar-chile.pages.dev/"
+URL_STATUS = "https://radar-chile.pages.dev/data/radar-status.json"
 CHILE = timezone(timedelta(hours=-4))  # o horário de verão desloca 1h, e as
                                        # folgas abaixo absorvem isso de sobra.
 
@@ -81,6 +82,23 @@ def telegram(msg: str) -> bool:
             if tentativa < 3:
                 time.sleep(5)
     return False
+
+
+def buscar_status() -> dict | None:
+    """
+    Estado das câmeras, publicado pelo próprio radar. Devolve None quando o
+    arquivo não existe ou não responde: nesse caso o vigia não inventa alarme,
+    porque a ausência do arquivo pode ser só um deploy antigo no ar.
+    """
+    try:
+        req = urllib.request.Request(URL_STATUS, headers={"User-Agent": "radar-chile-vigia (monitoramento)"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            if r.status != 200:
+                return None
+            return json.loads(r.read().decode("utf-8", "replace"))
+    except Exception as e:
+        print(f"status das câmeras indisponível: {e}", file=sys.stderr)
+        return None
 
 
 def buscar() -> str | None:
@@ -166,6 +184,25 @@ def main() -> int:
         # vista, porque acontece uma vez por mês e só incomoda quando alguém vai
         # procurar o preço. Em 01/08/2026 ela rodou, publicou e o commit foi
         # rejeitado; agosto sumiu do site e só voltou em 01/09.
+        # Câmera parada. O radar já aplica a régua de 24h sem imagem nova antes
+        # de chamar uma câmera de parada, então tudo que aparece aqui é fonte
+        # abandonada de verdade, não cache da plataforma. Foi assim que quatro
+        # câmeras do El Colorado e do Farellones passaram até um mês servindo o
+        # mesmo quadro congelado com carimbo de hoje.
+        status = buscar_status()
+        if status and status.get("cameras_paradas"):
+            paradas = status["cameras_paradas"]
+            nomes = ", ".join(
+                f"{c.get('nome') or c.get('camera')} (desde {str(c.get('parada_desde') or '')[8:10]}/"
+                f"{str(c.get('parada_desde') or '')[5:7]})"
+                for c in paradas[:6]
+            )
+            resto = f" e mais {len(paradas) - 6}" if len(paradas) > 6 else ""
+            problemas.append(
+                f"{len(paradas)} de {status.get('cameras_no_radar', '?')} câmeras estão paradas: "
+                f"{nomes}{resto}. A transmissão saiu do ar e a imagem no site é a última que sobrou."
+            )
+
         if agora.day >= DIA_TOLERANCIA_PASSAGENS and f"captured-{agora:%Y-%m}" not in html:
             problemas.append(
                 f"A captura de passagens de {agora:%m/%Y} não está no site. "

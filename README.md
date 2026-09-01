@@ -30,6 +30,9 @@ ficam velhos demais.
   se fosse de hoje.
 - A linha da cotação some da página. Sem esse caso, a checagem acima ficaria
   cega justamente quando o formato mudasse.
+- Alguma câmera está parada, segundo `data/radar-status.json`, que o próprio
+  radar publica. Ele só chama de parada a câmera cuja imagem não muda há mais
+  de 24 horas, então cache da plataforma não vira alarme falso.
 - A captura mensal de passagens do mês corrente não aparece no site a partir do
   dia 2. Ela roda todo dia 1 e é a falha mais fácil de passar batida, porque
   acontece uma vez por mês e só incomoda quando alguém vai procurar o preço.
