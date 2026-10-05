@@ -1,6 +1,6 @@
 {
   "ultima_checagem": "2026-10-05",
-  "ultimo_estado": "alarme (silenciado)",
-  "ultimo_alarme_em": "2026-10-04T16:45:01-04:00",
-  "ultimo_alarme_assinatura": "1 de 13 câmeras estão paradas: Bajo Zero (desde 30/09). A transmissão saiu do ar e a imagem no site é a última que sobrou."
+  "ultimo_estado": "alarme",
+  "ultimo_alarme_em": "2026-10-05T14:58:26-04:00",
+  "ultimo_alarme_assinatura": "1 de 13 câmeras estão paradas: Bajo Zero (desde 30/09). A transmissão saiu do ar e a imagem no site é a última que sobrou.|A cotação está congelada desde 04/10 às 13:24 (26 horas) e o site mostra ela como se fosse de hoje.|O site não atualiza desde 04/10 às 16:54 (22 horas atrás). Já deveria ter rodado hoje."
 }
